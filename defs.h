@@ -7,7 +7,7 @@
 
 #define TARGET_TO_KILL 10
 #define _LEVEL  1
-#define PLAYER_SPEED          6
+#define PLAYER_SPEED          10
 #define PLAYER_BULLET_SPEED   20
 #define PLAYER_RELOAD          8
 #define MAX_KEYBOARD_KEYS 350

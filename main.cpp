@@ -1,5 +1,6 @@
 #include <iostream>
 #include <SDL.h>
+#include <SDL_mixer.h>
 #include <SDL_image.h>
 #include "defs.h"
 #include "graphics.h"
@@ -12,7 +13,9 @@ int main(int argc, char* argv[]){
     graphics.init();
 
     Game game;
-    game.init(graphics);
+
+   game.init(graphics);
+
 
     bool quit = false;
     SDL_Event e;
@@ -27,6 +30,7 @@ int main(int argc, char* argv[]){
         graphics.presentScene();
         SDL_Delay(10);
     }
+    game.Destroy();
     graphics.quit();
     return 0;
 }

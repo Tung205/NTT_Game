@@ -4,6 +4,7 @@
 #include <SDL.h>
 #include <SDL_image.h>
 #include <list>
+#include <SDL_mixer.h>
 #include "defs.h"
 #include "graphics.h"
 #include "background.h"
@@ -36,6 +37,7 @@ void DirectionOriented(int x1, int y1, int x2, int y2, float *dx, float *dy, int
 }
 
 struct Game {
+    int check = 1;
     bool WinTheGame = false;
     int LEVEL = _LEVEL;
     int targetToKill = TARGET_TO_KILL;
@@ -43,14 +45,18 @@ struct Game {
     int change_bullet = 10;
     Explosion explosion;
     Background background;
+
     Object player; // thực thể người chơi -> player
     Object* boss_temp;
-
+    Mix_Music *gMusic;
+    Mix_Chunk *explode;
     // 1 loạt các list
     list<Object*> bullets; // list đạn bắn -> bullet
 	list<Object*> fighters; // list con quái -> enemy
 
     SDL_Texture *bulletTexture, *enemyTexture, *enemyBulletTexture, *enemyBulletTexture2, *explosionTexture, *bossTexture;
+
+
     int timeToCreateEnemy; // bộ hẹn thời gian xuất hiện quái vật
     int timeToResetStage; // thiết lập thời gian lặp lại giai đoạn
     int check_explosion = 0;
@@ -70,11 +76,8 @@ struct Game {
 
     void reset() // reset mọi thứ -> game
     {
-        cerr << "fighter" << endl;
         empty(fighters);
-        cerr << "bullet" << endl;
         empty(bullets);
-
         fighters.push_back(&player);
 
 	    initPlayer(player);
@@ -86,7 +89,13 @@ struct Game {
         change_bullet = 10;
 
 	}
-
+	void initMusic(Graphics& graphics){
+        Mix_Music *gMusic1 = graphics.loadMusic("sound3.mp3");
+      //  Mix_Music *gMusic = graphics.loadMusic("sound3.mp3");
+        Mix_Chunk *explode1 = graphics.loadSound("explode.mp3");
+        explode = explode1;
+      // graphics.playMusic(gMusic);
+    }
     void init(Graphics& graphics) // load các hình ảnh -> game
     {
         player.texture = graphics.loadTexture("player_1.png");
@@ -96,8 +105,14 @@ struct Game {
         background.texture = graphics.loadTexture("background_Lv1.png");
         explosionTexture = graphics.loadTexture("pngegg.png");
         explosion.init(explosionTexture, FRAMES, CLIPS);
+        Mix_Music *gMusic1 = graphics.loadMusic("sound3.mp3");
+          gMusic = graphics.loadMusic("sound3.mp3");
+        explode = graphics.loadSound("explode.mp3");
+
+       graphics.playMusic(gMusic);
         reset();
     }
+
     void updateLevel(Graphics& graphics, int LEVEL){
         if (LEVEL == 2){
             background.texture = graphics.loadTexture("background_Lv2.png");
@@ -129,9 +144,7 @@ struct Game {
            enemyBulletTexture = graphics.loadTexture ("flash.png");
             bossTexture = graphics.loadTexture ("boss2.png");
         }
-        cerr << "before RESET " << endl;
         reset();
-        cerr << "after RESET " << endl;
     }
 
     void createBoss(){
@@ -154,6 +167,7 @@ struct Game {
         boss->reload = 10;
         }
     }
+
     void setPlayerBullet() // khai hỏa bên mình -> player
     {
         Object *bullet = new Object();
@@ -223,6 +237,7 @@ struct Game {
     {
         for (Object* fighter: fighters) {
             if (fighter->side != b->side && b->collides(fighter)) {
+
                 if (fighter != boss_temp){
                 fighter->health =0;
                 }
@@ -279,14 +294,15 @@ struct Game {
             enemy->side = SIDE_ALIEN;
             enemy->texture = enemyTexture;
             SDL_QueryTexture(enemy->texture, NULL, NULL, &enemy->w, &enemy->h); // tạo quái
-            if (LEVEL <= 4){
+            if (LEVEL <= 5){
             timeToCreateEnemy = 30 + (rand() % 80);
             }
-            if (LEVEL > 4){
-                timeToCreateEnemy = 30 + (rand() % 70);
+            if (LEVEL > 5){
+                timeToCreateEnemy = 100 + (rand() % 75);
             } // tiếp tục set thời gian tiếp
         }
     }
+
 
     void doFighters(void) // nhân vật và quái di chuyển -> game (gộp 2 cái enemy & player)
     {
@@ -315,7 +331,7 @@ struct Game {
         }
 
         player.move(); // nhân vật di chuyển -> player
-       player.dx = 0;
+        player.dx = 0;
         player.dy = 0;
         if (player.x < 0) player.x = 0;
         else if (player.x >= SCREEN_WIDTH - player.w)
@@ -326,6 +342,7 @@ struct Game {
 	}
 
     void doLogic() { //-> game
+
         background.doBackground();
 
         doPlayer();
@@ -359,7 +376,8 @@ struct Game {
     }
     void render(Graphics& graphics) // vẽ -> game
     {
-        if (WinTheGame == true && --timeToResetStage <= 0){
+
+        if (WinTheGame == true){
                 LEVEL++;
                 updateLevel(graphics, LEVEL);
                 WinTheGame = false;
@@ -373,10 +391,17 @@ struct Game {
         for (Object* b: fighters)
             if (b->health > 0)
                 graphics.renderTexture(b->texture, b->x, b->y);
+
         if (check_explosion > 0){
             drawExplosion(graphics);
             check_explosion--;
+            graphics.play(explode);
         }
+
+    }
+    void Destroy(){
+        if (gMusic != nullptr) Mix_FreeMusic( gMusic );
+        if (explode != nullptr) Mix_FreeChunk( explode );
 
     }
 };
