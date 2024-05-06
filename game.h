@@ -21,9 +21,11 @@ struct Game {
     int targetToKill = TARGET_TO_KILL;
     int exist_boss = 0;
     int change_bullet = CHANGE_BULLET;
+    int change_bullet_counting = CHANGE_BULLET_COUNTING;
     Explosion explosion;
     Counting counting_life;
     Counting counting_target;
+    Counting counting_changeBullet;
     Background background;
     Object player;
     Object* boss_temp;
@@ -33,9 +35,9 @@ struct Game {
     list<Object*> bullets;
 	list<Object*> fighters;
 
-    SDL_Texture *bulletTexture, *enemyTexture, *enemyBulletTexture,
+    SDL_Texture *bulletTexture, *bulletTexture2, *enemyTexture, *enemyBulletTexture,
      *enemyBulletTexture2, *explosionTexture, *bossTexture,
-     *countingTexture, *countingTarget, *Win, *Lose, *life, *target;
+     *countingTexture, *countingTarget, *countingChangeBullet, *Win, *Lose, *life, *target, *changeBullet;
 
 
     int timeToCreateEnemy;
@@ -79,11 +81,13 @@ struct Game {
         player.texture = graphics.loadTexture("player_1.png");
         SDL_QueryTexture(player.texture, NULL, NULL, &player.w, &player.h);
         bulletTexture = graphics.loadTexture("playerbullet.png");
+        bulletTexture2 = graphics.loadTexture("purple_light.png");
         enemyTexture = graphics.loadTexture("enemy.png");
         background.texture = graphics.loadTexture("bg1.png");
 
         life = graphics.loadTexture("LIFE.png");
         target = graphics.loadTexture("Target.png");
+        changeBullet = graphics.loadTexture("change_bullet_pic.png");
 
         explosionTexture = graphics.loadTexture("pngegg.png");
         explosion.init(explosionTexture, FRAMES, CLIPS);
@@ -93,6 +97,10 @@ struct Game {
 
         countingTarget = graphics.loadTexture("counting.png");
         counting_target.init(countingTarget, LIFE_FRAMES, LIFE_COUNT);
+
+        countingChangeBullet = graphics.loadTexture("counting.png");
+        counting_changeBullet.init(countingChangeBullet, LIFE_FRAMES, LIFE_COUNT);
+        counting_changeBullet.tick(change_bullet_counting);
 
         graphics.playMusic(gMusic);
 
@@ -150,7 +158,7 @@ struct Game {
         boss->reload = 10;
     }
 
-    void setPlayerBullet()
+    void setPlayerBullet(int type)
     {
         Object *bullet = new Object();
         bullets.push_back(bullet);
@@ -158,10 +166,11 @@ struct Game {
         bullet->y = player.y + (player.h / 2) - (bullet->h / 2);
         bullet->dx = PLAYER_BULLET_SPEED;
         bullet->health = 10;
-        bullet->texture = bulletTexture;
+        if (type == 1) bullet->texture = bulletTexture;
+        if (type == 2) bullet->texture = bulletTexture2;
         bullet->side = SIDE_PLAYER;
         SDL_QueryTexture(bullet->texture, NULL, NULL, &bullet->w, &bullet->h);
-        player.reload = PLAYER_RELOAD; // không có dòng này thì đạn lã 1 loạt
+        player.reload = PLAYER_RELOAD;
     }
 
     void setEnemyBullet(Object* enemy)
@@ -208,7 +217,13 @@ struct Game {
         if (currentKeyStates[SDL_SCANCODE_DOWN]) player.dy = PLAYER_SPEED;
         if (currentKeyStates[SDL_SCANCODE_LEFT]) player.dx = -PLAYER_SPEED;
         if (currentKeyStates[SDL_SCANCODE_RIGHT])player.dx = PLAYER_SPEED;
-        if (currentKeyStates[SDL_SCANCODE_SPACE] && player.reload == 0) setPlayerBullet();
+        if (currentKeyStates[SDL_SCANCODE_SPACE] && player.reload == 0) setPlayerBullet(1);
+        if (currentKeyStates[SDL_SCANCODE_Q]&& player.reload == 0){
+            if (change_bullet_counting > 0){
+                setPlayerBullet(2);
+                change_bullet_counting--;
+            }
+        }
     }
 
     bool bulletHitFighter(Object *b)
@@ -243,7 +258,11 @@ struct Game {
                 bulletCollidesX = b->x;
                 bulletCollidesY = b->y;
             }
-            if (bulletHitFighter(b)|| b->offScreen()){
+            if ((bulletHitFighter(b)|| b->offScreen())&& b->texture != bulletTexture2){
+                delete b;
+                bullets.erase(temp);
+            }
+            if (b->texture == bulletTexture2 && b->offScreen()){
                 delete b;
                 bullets.erase(temp);
             }
@@ -271,7 +290,7 @@ struct Game {
             enemy->texture = enemyTexture;
             SDL_QueryTexture(enemy->texture, NULL, NULL, &enemy->w, &enemy->h);
             if (LEVEL <= 5){
-            timeToCreateEnemy = 30 + (rand() % 80);
+                timeToCreateEnemy = 20 + (rand() % 30);
             }
             if (LEVEL > 5){
                 timeToCreateEnemy = 100 + (rand() % 75);
@@ -398,24 +417,30 @@ struct Game {
 
             graphics.renderTexture(life, 20, 20);
             graphics.renderCounting(100, 20, counting_life);
-
             graphics.renderTexture(target, 780, 20);
             int c = ((int)targetToKill/2);
             if (c < 0) c = 1;
             counting_target.tick(c);
             graphics.renderCounting(910, 20, counting_target);
 
+            counting_changeBullet.tick(change_bullet_counting);
+            if (change_bullet_counting >0){
+                graphics.renderTexture(changeBullet,20, 650);
+                graphics.renderCounting(130, 650, counting_changeBullet);
+            }
+
             if (check_explosion > 0){
+                graphics.play(explode);
                 drawExplosion(graphics);
                 check_explosion--;
-                graphics.play(explode);
+
             }
         }
     }
 
     void Destroy(){
-        if (gMusic != nullptr) Mix_FreeMusic( gMusic);
-        if (explode != nullptr) Mix_FreeChunk( explode);
+        if (gMusic != nullptr) Mix_FreeMusic(gMusic);
+        if (explode != nullptr) Mix_FreeChunk(explode);
     }
 };
 

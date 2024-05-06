@@ -2,21 +2,21 @@
 #define _DEFS__H
 
 #define WINDOW_TITLE "Game Shooting Ghost!!!"
-#define SCREEN_WIDTH        1000
-#define SCREEN_HEIGHT       700
+#define SCREEN_WIDTH                1000
+#define SCREEN_HEIGHT               700
 
-#define LIFE_PLAYER         10
-#define TARGET_TO_KILL      20
-#define CHANGE_BULLET       10
-#define _LEVEL              1
-#define PLAYER_SPEED        10
-#define PLAYER_BULLET_SPEED 20
-#define PLAYER_RELOAD       8
-
-#define SIDE_PLAYER         0
-#define SIDE_ALIEN          1
-#define FRAME_PER_SECOND    60
-#define ENEMY_BULLET_SPEED  5
+#define LIFE_PLAYER                 10
+#define TARGET_TO_KILL              20
+#define CHANGE_BULLET               10
+#define _LEVEL                      1
+#define PLAYER_SPEED                10
+#define PLAYER_BULLET_SPEED         20
+#define PLAYER_RELOAD               8
+#define CHANGE_BULLET_COUNTING      3
+#define SIDE_PLAYER                 0
+#define SIDE_ALIEN                  1
+#define FRAME_PER_SECOND            60
+#define ENEMY_BULLET_SPEED          5
 
 
 const int CLIPS[][4] = {
