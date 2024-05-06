@@ -217,6 +217,10 @@ struct Game {
         if (currentKeyStates[SDL_SCANCODE_DOWN]) player.dy = PLAYER_SPEED;
         if (currentKeyStates[SDL_SCANCODE_LEFT]) player.dx = -PLAYER_SPEED;
         if (currentKeyStates[SDL_SCANCODE_RIGHT])player.dx = PLAYER_SPEED;
+        if (currentKeyStates[SDL_SCANCODE_A]) player.x = 20;
+        if (currentKeyStates[SDL_SCANCODE_D]) player.x = 980;
+        if (currentKeyStates[SDL_SCANCODE_W]) player.y = 20;
+        if (currentKeyStates[SDL_SCANCODE_S]) player.y = 980;
         if (currentKeyStates[SDL_SCANCODE_SPACE] && player.reload == 0) setPlayerBullet(1);
         if (currentKeyStates[SDL_SCANCODE_Q]&& player.reload == 0){
             if (change_bullet_counting > 0){

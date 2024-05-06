@@ -143,7 +143,6 @@ struct Graphics {
     }
     void quit()
     {
-        TTF_Quit();
         Mix_Quit();
         IMG_Quit();
         SDL_DestroyRenderer(renderer);
