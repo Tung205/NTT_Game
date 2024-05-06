@@ -1,18 +1,16 @@
 #ifndef _GRAPHICS__H
 #define _GRAPHICS__H
-#include <iostream>
+
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_mixer.h>
-#include "defs.h"
 #include "explosion.h"
-
-class Graphics {
-    public:
-    SDL_Renderer *renderer;
+#include "counting.h"
+#include "defs.h"
+struct Graphics {
+     SDL_Renderer *renderer;
 	SDL_Window *window;
-
-	void logErrorAndExit(const char* msg, const char* error)
+    	void logErrorAndExit(const char* msg, const char* error)
     {
         SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_ERROR, "%s: %s", msg, error);
         SDL_Quit();
@@ -36,7 +34,7 @@ class Graphics {
         SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
         SDL_RenderSetLogicalSize(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
 
-         //Initialize SDL_mixer
+
         if( Mix_OpenAudio( 44100, MIX_DEFAULT_FORMAT, 2, 2048 ) < 0 )
         {
             logErrorAndExit( "SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError() );
@@ -97,6 +95,11 @@ class Graphics {
         SDL_Rect renderQuad = {x, y, clip->w, clip->h};
         SDL_RenderCopy(renderer, explosion.texture, clip, &renderQuad);
     }
+    void renderCounting(int x, int y, const Counting& counting) {
+        const SDL_Rect* clip = counting.getCurrentClip();
+        SDL_Rect renderQuad = {x, y, clip->w, clip->h};
+        SDL_RenderCopy(renderer, counting.texture, clip, &renderQuad);
+    }
 
     Mix_Music *loadMusic(const char* path)
     {
@@ -134,23 +137,19 @@ class Graphics {
 
     }
     void play(Mix_Chunk* gChunk) {
-        std::cerr << "START " << std::endl;
         if (gChunk != nullptr) {
             Mix_PlayChannel( -1, gChunk, 0 );
         }
-        std::cerr << "SUCCESS " << std::endl;
     }
-
     void quit()
     {
+        TTF_Quit();
         Mix_Quit();
         IMG_Quit();
         SDL_DestroyRenderer(renderer);
         SDL_DestroyWindow(window);
         SDL_Quit();
     }
-
 };
 
 #endif // _GRAPHICS__H
-

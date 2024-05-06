@@ -5,65 +5,46 @@
 #include <SDL_image.h>
 #include <list>
 #include <SDL_mixer.h>
+#include <SDL_ttf.h>
 #include "defs.h"
 #include "graphics.h"
 #include "background.h"
 #include "object.h"
 #include "explosion.h"
-
-void initPlayer(Object& player) {
-    player.x = 100;
-    player.y = 100;
-    player.health = 1;
-    player.side = SIDE_PLAYER;
-    player.reload = 0;
-}
-
-void DirectionOriented(int x1, int y1, int x2, int y2, float *dx, float *dy, int LEVEL) // tính toán độ dốc ?? (hệ số góc)
-{
-	float steps = max(abs(x1 - x2), abs(y1 - y2));
-
-	if (steps == 0)
-	{
-		*dx = *dy = 0;
-		return;
-	}
-	*dx = (float)(x1 - x2)/steps;
-	*dy = (float)(y1 - y2)/steps;
-	if (LEVEL < 5){
-        *dx = (int)*dx;
-        *dy = (int)*dy;
-	}
-}
+#include "counting.h"
 
 struct Game {
-    int check = 1;
+
+    int Life = LIFE_PLAYER;
     bool WinTheGame = false;
     int LEVEL = _LEVEL;
     int targetToKill = TARGET_TO_KILL;
     int exist_boss = 0;
-    int change_bullet = 10;
+    int change_bullet = CHANGE_BULLET;
     Explosion explosion;
+    Counting counting_life;
+    Counting counting_target;
     Background background;
-
-    Object player; // thực thể người chơi -> player
+    Object player;
     Object* boss_temp;
     Mix_Music *gMusic;
     Mix_Chunk *explode;
-    // 1 loạt các list
-    list<Object*> bullets; // list đạn bắn -> bullet
-	list<Object*> fighters; // list con quái -> enemy
 
-    SDL_Texture *bulletTexture, *enemyTexture, *enemyBulletTexture, *enemyBulletTexture2, *explosionTexture, *bossTexture;
+    list<Object*> bullets;
+	list<Object*> fighters;
+
+    SDL_Texture *bulletTexture, *enemyTexture, *enemyBulletTexture,
+     *enemyBulletTexture2, *explosionTexture, *bossTexture,
+     *countingTexture, *countingTarget, *Win, *Lose, *life, *target;
 
 
-    int timeToCreateEnemy; // bộ hẹn thời gian xuất hiện quái vật
-    int timeToResetStage; // thiết lập thời gian lặp lại giai đoạn
+    int timeToCreateEnemy;
+    int timeToResetStage;
     int check_explosion = 0;
     int bulletCollidesX = 0;
     int bulletCollidesY = 0;
 
-    void empty(list<Object*>& object) { //-> game
+    void empty(list<Object*>& object){
         while (!object.empty()) {
             Object* e = object.front();
             object.pop_front();
@@ -74,81 +55,83 @@ struct Game {
         }
     }
 
-    void reset() // reset mọi thứ -> game
-    {
+    void reset(){
         empty(fighters);
         empty(bullets);
         fighters.push_back(&player);
-
 	    initPlayer(player);
-
         timeToCreateEnemy = 0;
         timeToResetStage = FRAME_PER_SECOND * 3;
         targetToKill = TARGET_TO_KILL;
-        exist_boss = 1;
+        exist_boss = 0;
         change_bullet = 10;
-
 	}
-	void initMusic(Graphics& graphics){
-        Mix_Music *gMusic1 = graphics.loadMusic("sound3.mp3");
-      //  Mix_Music *gMusic = graphics.loadMusic("sound3.mp3");
-        Mix_Chunk *explode1 = graphics.loadSound("explode.mp3");
-        explode = explode1;
-      // graphics.playMusic(gMusic);
-    }
-    void init(Graphics& graphics) // load các hình ảnh -> game
+
+    void init(Graphics& graphics)
     {
+        Mix_Music *gMusic1 = graphics.loadMusic("sound3.mp3");
+        gMusic = graphics.loadMusic("sound3.mp3");
+        explode = graphics.loadSound("explode.mp3");
+
+        Win = graphics.loadTexture("WinGame.png");
+        Lose = graphics.loadTexture("LoseGame.png");
+
         player.texture = graphics.loadTexture("player_1.png");
         SDL_QueryTexture(player.texture, NULL, NULL, &player.w, &player.h);
         bulletTexture = graphics.loadTexture("playerbullet.png");
         enemyTexture = graphics.loadTexture("enemy.png");
-        background.texture = graphics.loadTexture("background_Lv1.png");
+        background.texture = graphics.loadTexture("bg1.png");
+
+        life = graphics.loadTexture("LIFE.png");
+        target = graphics.loadTexture("Target.png");
+
         explosionTexture = graphics.loadTexture("pngegg.png");
         explosion.init(explosionTexture, FRAMES, CLIPS);
-        Mix_Music *gMusic1 = graphics.loadMusic("sound3.mp3");
-          gMusic = graphics.loadMusic("sound3.mp3");
-        explode = graphics.loadSound("explode.mp3");
 
-       graphics.playMusic(gMusic);
+        countingTexture = graphics.loadTexture("counting.png");
+        counting_life.init(countingTexture, LIFE_FRAMES, LIFE_COUNT);
+
+        countingTarget = graphics.loadTexture("counting.png");
+        counting_target.init(countingTarget, LIFE_FRAMES, LIFE_COUNT);
+
+        graphics.playMusic(gMusic);
+
         reset();
     }
 
     void updateLevel(Graphics& graphics, int LEVEL){
         if (LEVEL == 2){
-            background.texture = graphics.loadTexture("background_Lv2.png");
+            background.texture = graphics.loadTexture("bg2.png");
             enemyBulletTexture = graphics.loadTexture("bulletobject.png");
         }
         if (LEVEL == 3){
-            background.texture = graphics.loadTexture("background_Lv3.png");
-           // enemyBulletTexture = graphics.loadTexture("bulletobject.png");
+            background.texture = graphics.loadTexture("bg3.png");
         }
         if (LEVEL == 4){
-            background.texture = graphics.loadTexture("background4.png");
+            background.texture = graphics.loadTexture("bg4.png");
             enemyBulletTexture = graphics.loadTexture("red_light.png");
         }
         if (LEVEL == 5){
-            background.texture = graphics.loadTexture ("background_Lv2.png");
+            background.texture = graphics.loadTexture ("bg5.png");
             enemyBulletTexture2 = graphics.loadTexture ("red_light.png");
             enemyBulletTexture = graphics.loadTexture ("flash.png");
             bossTexture = graphics.loadTexture ("boss1.png");
         }
         if (LEVEL == 6){
-            background.texture = graphics.loadTexture ("background_Lv6.png");
+            background.texture = graphics.loadTexture ("bg6.png");
            enemyBulletTexture = graphics.loadTexture ("red_light.png");
             enemyBulletTexture2 = graphics.loadTexture ("bulletobject.png");
-          //  bossTexture = graphics.loadTexture ("boss1.png");
         }
         if (LEVEL == 7){
-            background.texture = graphics.loadTexture ("Background.png");
+            background.texture = graphics.loadTexture ("bg7.png");
             enemyBulletTexture2 = graphics.loadTexture ("red_light.png");
-           enemyBulletTexture = graphics.loadTexture ("flash.png");
+            enemyBulletTexture = graphics.loadTexture ("flash.png");
             bossTexture = graphics.loadTexture ("boss2.png");
         }
         reset();
     }
 
     void createBoss(){
-        if (--timeToCreateEnemy <= 0){
         Object* boss = new Object();
         boss_temp = boss;
         fighters.push_back(boss);
@@ -165,10 +148,9 @@ struct Game {
         boss->texture = bossTexture;
         SDL_QueryTexture(boss->texture, NULL, NULL,& boss->w,& boss->h);
         boss->reload = 10;
-        }
     }
 
-    void setPlayerBullet() // khai hỏa bên mình -> player
+    void setPlayerBullet()
     {
         Object *bullet = new Object();
         bullets.push_back(bullet);
@@ -179,16 +161,13 @@ struct Game {
         bullet->texture = bulletTexture;
         bullet->side = SIDE_PLAYER;
         SDL_QueryTexture(bullet->texture, NULL, NULL, &bullet->w, &bullet->h);
-
-        player.reload = PLAYER_RELOAD;
+        player.reload = PLAYER_RELOAD; // không có dòng này thì đạn lã 1 loạt
     }
 
-    void setEnemyBullet(Object* enemy) // khai hỏa bên đối thủ -> enemy
+    void setEnemyBullet(Object* enemy)
     {
-
         Object *bullet = new Object();
         bullets.push_back(bullet);
-
         bullet->x = enemy->x;
         bullet->y = enemy->y;
         bullet->health = 1;
@@ -196,10 +175,10 @@ struct Game {
         if (change_bullet > 0){
         bullet->texture = enemyBulletTexture2;
         change_bullet--;
-        if (change_bullet <= 0) {
-        bullet-> texture = enemyBulletTexture;
-        change_bullet = 10;
-        }
+            if (change_bullet <= 0) {
+                bullet-> texture = enemyBulletTexture;
+                change_bullet = 10;
+            }
         }
         } else {
         bullet->texture = enemyBulletTexture;
@@ -220,7 +199,7 @@ struct Game {
         enemy->reload = (rand() % FRAME_PER_SECOND * 2);
     }
 
-    void doPlayer(){
+    void controlPlayer(){
 
         if (player.health == 0) return;
         if (player.reload > 0) player.reload--;
@@ -230,10 +209,9 @@ struct Game {
         if (currentKeyStates[SDL_SCANCODE_LEFT]) player.dx = -PLAYER_SPEED;
         if (currentKeyStates[SDL_SCANCODE_RIGHT])player.dx = PLAYER_SPEED;
         if (currentKeyStates[SDL_SCANCODE_SPACE] && player.reload == 0) setPlayerBullet();
-         // nhân vật di chuyển
     }
 
-    bool bulletHitFighter(Object *b) // va chạm -> đạn bắn trúng địch -> enemy
+    bool bulletHitFighter(Object *b)
     {
         for (Object* fighter: fighters) {
             if (fighter->side != b->side && b->collides(fighter)) {
@@ -241,49 +219,47 @@ struct Game {
                 if (fighter != boss_temp){
                 fighter->health =0;
                 }
+                if (fighter != &player){
+                     --targetToKill;
+                    if (targetToKill == 0){
+                        WinTheGame = true;
+                    }
+                }
                 return true;
             }
         }
         return false;
     }
 
-    void doBullets() //-> bullet
+    void fireBullets()
     {
         auto it = bullets.begin();
         while (it != bullets.end()) {
             auto temp = it++;
-            Object* b = *temp; // đạn bắn thứ i trong 1 băng đạn
-            b->move(); // di chuyển
+            Object* b = *temp;
+            b->move();
             if (bulletHitFighter(b)){
                 ++check_explosion;
                 bulletCollidesX = b->x;
                 bulletCollidesY = b->y;
-                --targetToKill;
-                if (targetToKill == 0){
-                    WinTheGame = true;
-                }
             }
-            if (bulletHitFighter(b)|| b->offScreen()) { //nếu bắn trúng địch hoặc ra khỏi màn hình -> xóa.
+            if (bulletHitFighter(b)|| b->offScreen()){
                 delete b;
                 bullets.erase(temp);
             }
-
-
         }
     }
 
-    void doEnemies() { // -> enemy
-
-        for (Object* e: fighters) { // thực thể địch
-
-            if (e != &player && player.health != 0 && --e->reload <= 0) // nếu e không phải người chơi và máu khác 0 và reload <0
-                setEnemyBullet(e); // khai hỏa bên đối thủ
-
+    void doEnemies(){
+        for (Object* e: fighters) {
+            if (e != &player && player.health != 0 && --e->reload <= 0){
+                setEnemyBullet(e);
+            }
         }
     }
 
-    void CreateEnemy(void) { //-> enemy
-        if (--timeToCreateEnemy <= 0) { // khi bộ đếm thời gian trở về 0
+    void CreateEnemy() {
+        if (--timeToCreateEnemy <= 0) {
             Object *enemy = new Object();
             fighters.push_back(enemy);
             enemy->x = SCREEN_WIDTH;
@@ -293,27 +269,25 @@ struct Game {
             enemy->reload = FRAME_PER_SECOND * (1 + (rand() % 3));
             enemy->side = SIDE_ALIEN;
             enemy->texture = enemyTexture;
-            SDL_QueryTexture(enemy->texture, NULL, NULL, &enemy->w, &enemy->h); // tạo quái
+            SDL_QueryTexture(enemy->texture, NULL, NULL, &enemy->w, &enemy->h);
             if (LEVEL <= 5){
             timeToCreateEnemy = 30 + (rand() % 80);
             }
             if (LEVEL > 5){
                 timeToCreateEnemy = 100 + (rand() % 75);
-            } // tiếp tục set thời gian tiếp
+            }
         }
     }
 
 
-    void doFighters(void) // nhân vật và quái di chuyển -> game (gộp 2 cái enemy & player)
+    void doFighters()
     {
-        auto it = fighters.begin(); // -> enemy
+        auto it = fighters.begin();
         it++;
-
-
         while (it != fighters.end()) {
             auto temp = it++;
             Object* fighter = *temp;
-            fighter->move(); // quái vật di chuyển
+            fighter->move();
             if (fighter->y == SCREEN_HEIGHT-30){
                 fighter-> dy = - 5;
             }
@@ -321,8 +295,7 @@ struct Game {
                 fighter-> dy = 5;
             }
 
-            if (fighter->x < -fighter->w) fighter->health = 0; //-> out màn hình -> sức mạnh = 0 -> delete
-
+            if (fighter->x < -fighter->w) fighter->health = 0;
             if (fighter->health == 0) {
                 delete fighter;
                 fighters.erase(temp);
@@ -330,7 +303,7 @@ struct Game {
             }
         }
 
-        player.move(); // nhân vật di chuyển -> player
+        player.move();
         player.dx = 0;
         player.dy = 0;
         if (player.x < 0) player.x = 0;
@@ -340,33 +313,46 @@ struct Game {
         else if (player.y >= SCREEN_HEIGHT - player.h)
             player.y = SCREEN_HEIGHT - player.h;
 	}
+	bool WINGAME(){
+	    if( LEVEL == 8){
+            return true;
+	    }
+	    return false;
+	}
+	bool LOSEGAME(){
+	    if (Life == 0){
+            return true;
+	    }
+	    return false;
+	}
 
-    void doLogic() { //-> game
+    void LogicGame() {
+        if (WINGAME() == false && LOSEGAME() == false){
+            background.doBackground();
+            controlPlayer();
+            doFighters();
+            if (LEVEL >= 2){
+                doEnemies();
+            }
+            if (LEVEL >= 5) {
+                if (exist_boss ==0){
+                    createBoss();
+                    exist_boss++;
+                }
+            }
+            if (LEVEL != 5){
+                CreateEnemy();
+            }
+        fireBullets();
 
-        background.doBackground();
-
-        doPlayer();
-        doFighters();
-        if (LEVEL >= 2){
-        doEnemies();
-        }
-
-        if (LEVEL >= 5) {
-            if (exist_boss ==1){
-            createBoss();
-            exist_boss--;
+        if (player.health == 0 && --timeToResetStage <= 0){
+                Life--;
+                counting_life.tick(Life);
+                reset();
             }
         }
-        if (LEVEL != 5){
-        CreateEnemy();
-        }
-        doBullets();
-        //cerr << "Target to Kill: " << targetToKill << endl;
-        if (player.health == 0 && --timeToResetStage <= 0){
-                reset();
-        }
-
     }
+
     void drawExplosion(Graphics& graphics){
         while(explosion.currentFrame < FRAMES){
             explosion.tick();
@@ -374,35 +360,62 @@ struct Game {
         }
         explosion.currentFrame = 0;
     }
-    void render(Graphics& graphics) // vẽ -> game
-    {
 
-        if (WinTheGame == true){
+    void render(Graphics& graphics) {
+        if (WINGAME() == true){
+            SDL_Rect dest;
+            dest.x = 0;
+            dest.y = 0;
+            dest.w = SCREEN_WIDTH;
+            dest.h = SCREEN_HEIGHT;
+            SDL_RenderCopy(graphics.renderer, Win, NULL, &dest);
+        }
+        if (LOSEGAME() == true){
+            SDL_Rect dest1;
+            dest1.x = 0;
+            dest1.y = 0;
+            dest1.w = SCREEN_WIDTH;
+            dest1.h = SCREEN_HEIGHT;
+            SDL_RenderCopy(graphics.renderer, Lose, NULL, &dest1);
+        }
+        if (WINGAME() == false && LOSEGAME() == false){
+            if (WinTheGame == true){
                 LEVEL++;
                 updateLevel(graphics, LEVEL);
                 WinTheGame = false;
-        }
+            }
+            background.drawBackground(graphics.renderer);
 
-        background.drawBackground(graphics.renderer); // vẽ nền
-
-		for (Object* b: bullets)
-            graphics.renderTexture(b->texture, b->x, b->y);
-
-        for (Object* b: fighters)
-            if (b->health > 0)
+            for (Object* b: bullets){
                 graphics.renderTexture(b->texture, b->x, b->y);
+            }
 
-        if (check_explosion > 0){
-            drawExplosion(graphics);
-            check_explosion--;
-            graphics.play(explode);
+            for (Object* b: fighters){
+                if (b->health > 0){
+                    graphics.renderTexture(b->texture, b->x, b->y);
+                }
+            }
+
+            graphics.renderTexture(life, 20, 20);
+            graphics.renderCounting(100, 20, counting_life);
+
+            graphics.renderTexture(target, 780, 20);
+            int c = ((int)targetToKill/2);
+            if (c < 0) c = 1;
+            counting_target.tick(c);
+            graphics.renderCounting(910, 20, counting_target);
+
+            if (check_explosion > 0){
+                drawExplosion(graphics);
+                check_explosion--;
+                graphics.play(explode);
+            }
         }
-
     }
-    void Destroy(){
-        if (gMusic != nullptr) Mix_FreeMusic( gMusic );
-        if (explode != nullptr) Mix_FreeChunk( explode );
 
+    void Destroy(){
+        if (gMusic != nullptr) Mix_FreeMusic( gMusic);
+        if (explode != nullptr) Mix_FreeChunk( explode);
     }
 };
 
