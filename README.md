@@ -1,13 +1,23 @@
 # NTT_GameProject_FINAL
-Họ và tên: Nguyễn Thanh Tùng
-Mã sinh viên: 23021715
-Game ShootingGhost lấy một phần ý tưởng từ game "Chicken Invader". Mục tiêu là con tàu vũ trụ bắn những con ma, những con quái vật, boss xuất hiện trên màn hình để giành chiến thắng.
-1 số tính năng đã làm được trong game.
-- Tạo struct, dùng con trỏ, cấp phát động, vector để tạo nhân vật, tạo quái vật, tạo đạn bắn, tạo boss, xử lí va chạm, xử lí ra khỏi màn hình.
-- Dùng các frames clip (hoạt ảnh chuyển động) để tạo hiệu ứng vụ nổ (Explosion)
-- Sử dụng kĩ thuật background trôi.
-- Tạo ra 1 trò chơi có nhiều màn chơi, nhiều level từ dễ đến khó, đánh boss, yêu quái.
-- Tạo ra nhiều tính năng cho nhân vật game: Nâng cấp nhiều đạn bắn, mỗi loại đạn bắn có những tính năng khác nhau, nâng cấp khiên chống đạn, tốc biến để né đạn của địch.
-- Tạo âm thanh cho trò chơi, nhân vật.
-- Tạo Menu để chơi game.
-Nguồn tham khảo: Code mẫu của cô.
+- Họ và tên: Nguyễn Thanh Tùng
+- Mã sinh viên: 23021715
+- Game ShootingGhost lấy một phần ý tưởng từ game "Chicken Invader". Mục tiêu là con tàu vũ trụ bắn những con ma, những con quái vật, boss xuất hiện trên màn hình để giành chiến thắng.
+- Hướng dẫn chơi game:
+- Bạn điều khiển con tàu để bắn và tiêu diệt những con quái vật, những con boss trên màn hình. Bắn được 10 con quái vật thì sẽ qua cửa đó.
+- Bạn có 10 mạng trong suốt quá trình chơi game, nếu hết 10 mạng thì bạn thua, nếu qua hết 7 cửa thì bạn thắng.
+- Trong quá trình chơi game, bạn có thể sử dụng các tính năng như tốc biến ra các vị trí khác nhau (A,S,D,W), kháng phép (phím E) 3 lần, bắn đạn xuyên qua quái vật (phím D) 3 lần. Những tính năng đó sẽ giúp hỗ trợ bạn trong các màn chơi.
+- 1 số tính năng đã làm được trong game:
+- Tạo Menu, xử lí bắt đầu trò chơi và kết thúc trò chơi.
+- Tạo ra background trôi, mỗi 1 cửa có 1 loại background khác nhau.
+- Có 7 level từ dễ đến khó cho người chơi trải nghiệm.
+- Tạo các texture đếm số từ 10 về 1, từ 3 về 1 (Cắt các frame liên tiếp từ 1 ảnh lớn) cùng với các hình ảnh để thông báo số mạng còn lại, số mục tiêu còn lại cần tiêu diệt trong cửa đó, số các tính năng còn lại.
+- Sử dụng các struct để tạo các nhân vật, đạn bắn, cho vào các list <...> để tiện điều khiển.
+- Sử dụng các hàm, các nút điều khiển player, tạo quái ngẫu nhiên.
+- Có 3 cửa có boss. Các con boss được tạo theo 1 cách riêng.
+- Có hoạt ảnh chuyển động xử lí vụ nổ. (Cắt các frame liên tiếp từ 1 ảnh lớn)
+- Có nhạc nền cho game, có âm thanh nổ mỗi khi bắn trúng quái vật và bị quái vật bắn đạn trúng.
+- Có màn hình xử lí khi người chơi Thắng/ Thua.
+- Tính năng 1: Tạo đạn bắn sau khi bắn qua quái vật nhưng không bị mất đi mà tiếp tục di chuyển đến cuối màn hình mới delete (Q). (Từ đó giúp bắn được nhiều quái vật hơn trên đường đạn mà nó di chuyển). Có 3 lần sử dụng loại đạn này, sau 3 lần thì không dùng được nữa.
+- Tính năng 2: Tạo tốc biến (A, S, D, W) để giúp nhân vật game tốc biến ra những vị trí cụ thể, tránh sự tấn công dồn dập, bị ép vào thế gọng kìm từ những đạn bắn của quái vật.
+- Tính năng 3: Kháng phép (E), tạo ra 1 texture vòng tròn bảo vệ nhân vật, miễn nhiễm với mọi đạn bắn mà quái vật hướng đến trong 1 khoảng thời gian nhất định thì sẽ hết bảo vệ. Có 3 lần sử dụng loại kháng phép này, sau 3 lần sẽ khoogn dùng được nữa.
+- Nguồn tham khảo: Code mẫu của cô.
