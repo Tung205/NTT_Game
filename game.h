@@ -5,7 +5,6 @@
 #include <SDL_image.h>
 #include <list>
 #include <SDL_mixer.h>
-#include <SDL_ttf.h>
 #include "defs.h"
 #include "graphics.h"
 #include "background.h"
@@ -22,10 +21,14 @@ struct Game {
     int exist_boss = 0;
     int change_bullet = CHANGE_BULLET;
     int change_bullet_counting = CHANGE_BULLET_COUNTING;
+    int defend_counting = DEFEND_COUNTING;
+    bool defend_status = false;
+    int countingTillFinish = COUNTING_TILL_FINISH;
     Explosion explosion;
     Counting counting_life;
     Counting counting_target;
     Counting counting_changeBullet;
+    Counting counting_defend;
     Background background;
     Object player;
     Object* boss_temp;
@@ -36,8 +39,9 @@ struct Game {
 	list<Object*> fighters;
 
     SDL_Texture *bulletTexture, *bulletTexture2, *enemyTexture, *enemyBulletTexture,
-     *enemyBulletTexture2, *explosionTexture, *bossTexture,
-     *countingTexture, *countingTarget, *countingChangeBullet, *Win, *Lose, *life, *target, *changeBullet;
+     *enemyBulletTexture2, *explosionTexture, *bossTexture, *defendTexture,
+     *countingTexture, *countingTarget, *countingChangeBullet, *countingDefend,
+     *Win, *Lose, *life, *target, *defend, *changeBullet;
 
 
     int timeToCreateEnemy;
@@ -84,10 +88,12 @@ struct Game {
         bulletTexture2 = graphics.loadTexture("purple_light.png");
         enemyTexture = graphics.loadTexture("enemy.png");
         background.texture = graphics.loadTexture("bg1.png");
+        defendTexture = graphics.loadTexture("defend.png");
 
         life = graphics.loadTexture("LIFE.png");
         target = graphics.loadTexture("Target.png");
         changeBullet = graphics.loadTexture("change_bullet_pic.png");
+        defend = graphics.loadTexture("defendpic.png");
 
         explosionTexture = graphics.loadTexture("pngegg.png");
         explosion.init(explosionTexture, FRAMES, CLIPS);
@@ -101,6 +107,10 @@ struct Game {
         countingChangeBullet = graphics.loadTexture("counting.png");
         counting_changeBullet.init(countingChangeBullet, LIFE_FRAMES, LIFE_COUNT);
         counting_changeBullet.tick(change_bullet_counting);
+
+        countingDefend = graphics.loadTexture("counting.png");
+        counting_defend.init(countingChangeBullet, LIFE_FRAMES, LIFE_COUNT);
+        counting_defend.tick(defend_counting);
 
         graphics.playMusic(gMusic);
 
@@ -146,9 +156,9 @@ struct Game {
         boss->x = SCREEN_WIDTH * 3 /4;
         boss->y = SCREEN_HEIGHT/2;
         if (LEVEL == 5 || LEVEL  == 6){
-        boss->dy = 5;
+            boss->dy = 5;
         } else {
-        boss->dy = 0;
+            boss->dy = 0;
         }
         boss->dx = 0;
         boss->health = 1;
@@ -182,13 +192,13 @@ struct Game {
         bullet->health = 1;
         if (LEVEL >= 5){
         if (change_bullet > 0){
-        bullet->texture = enemyBulletTexture2;
-        change_bullet--;
-            if (change_bullet <= 0) {
-                bullet-> texture = enemyBulletTexture;
-                change_bullet = 10;
-            }
+            bullet->texture = enemyBulletTexture2;
+            change_bullet--;
         }
+        if (change_bullet <= 0) {
+            bullet-> texture = enemyBulletTexture;
+            change_bullet = 10;
+            }
         } else {
         bullet->texture = enemyBulletTexture;
         }
@@ -224,8 +234,18 @@ struct Game {
         if (currentKeyStates[SDL_SCANCODE_SPACE] && player.reload == 0) setPlayerBullet(1);
         if (currentKeyStates[SDL_SCANCODE_Q]&& player.reload == 0){
             if (change_bullet_counting > 0){
+                cerr << "Change bullet " << change_bullet_counting << endl;
                 setPlayerBullet(2);
                 change_bullet_counting--;
+            }
+        }
+        if (currentKeyStates[SDL_SCANCODE_E]&& player.reload == 0){
+            if (defend_counting > 0){
+                cerr << "defend counting" << defend_counting << endl;
+                defend_status = true;
+                countingTillFinish = COUNTING_TILL_FINISH;
+                defend_counting--;
+                player.reload = PLAYER_RELOAD;
             }
         }
     }
@@ -234,8 +254,10 @@ struct Game {
     {
         for (Object* fighter: fighters) {
             if (fighter->side != b->side && b->collides(fighter)) {
-
-                if (fighter != boss_temp){
+                if (fighter == &player && defend_status == true){
+                    return false;
+                }
+                if (fighter != boss_temp || (fighter == &player && defend_status == false)){
                 fighter->health =0;
                 }
                 if (fighter != &player){
@@ -257,18 +279,25 @@ struct Game {
             auto temp = it++;
             Object* b = *temp;
             b->move();
+
             if (bulletHitFighter(b)){
                 ++check_explosion;
                 bulletCollidesX = b->x;
                 bulletCollidesY = b->y;
+                if (b->texture != bulletTexture2){
+                    delete b;
+                    bullets.erase(temp);
+                }
             }
-            if ((bulletHitFighter(b)|| b->offScreen())&& b->texture != bulletTexture2){
+            if (b->offScreen()){
                 delete b;
                 bullets.erase(temp);
             }
-            if (b->texture == bulletTexture2 && b->offScreen()){
-                delete b;
-                bullets.erase(temp);
+            if (defend_status == true){
+                countingTillFinish--;
+                if (countingTillFinish < 0){
+                    defend_status = false;
+                }
             }
         }
     }
@@ -366,9 +395,9 @@ struct Game {
             if (LEVEL != 5){
                 CreateEnemy();
             }
-        fireBullets();
+            fireBullets();
 
-        if (player.health == 0 && --timeToResetStage <= 0){
+            if (player.health == 0 && --timeToResetStage <= 0){
                 Life--;
                 counting_life.tick(Life);
                 reset();
@@ -421,8 +450,9 @@ struct Game {
 
             graphics.renderTexture(life, 20, 20);
             graphics.renderCounting(100, 20, counting_life);
+
             graphics.renderTexture(target, 780, 20);
-            int c = ((int)targetToKill/2);
+            int c = targetToKill;
             if (c < 0) c = 1;
             counting_target.tick(c);
             graphics.renderCounting(910, 20, counting_target);
@@ -433,6 +463,15 @@ struct Game {
                 graphics.renderCounting(130, 650, counting_changeBullet);
             }
 
+            counting_defend.tick(defend_counting);
+            if (defend_counting >0){
+                graphics.renderTexture(defend,830, 650);
+                graphics.renderCounting(910, 650, counting_defend);
+            }
+
+            if (defend_status == true){
+                graphics.renderTexture(defendTexture, player.x, player.y);
+            }
             if (check_explosion > 0){
                 graphics.play(explode);
                 drawExplosion(graphics);

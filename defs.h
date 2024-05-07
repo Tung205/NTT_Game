@@ -6,7 +6,7 @@
 #define SCREEN_HEIGHT               700
 
 #define LIFE_PLAYER                 10
-#define TARGET_TO_KILL              20
+#define TARGET_TO_KILL              10
 #define CHANGE_BULLET               10
 #define _LEVEL                      1
 #define PLAYER_SPEED                10
@@ -17,7 +17,8 @@
 #define SIDE_ALIEN                  1
 #define FRAME_PER_SECOND            60
 #define ENEMY_BULLET_SPEED          5
-
+#define DEFEND_COUNTING             3
+#define COUNTING_TILL_FINISH        2000
 
 const int CLIPS[][4] = {
     {5, 5, 175, 175},
