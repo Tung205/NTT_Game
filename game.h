@@ -302,7 +302,7 @@ struct Game {
         }
     }
 
-    void doEnemies(){
+    void fireEnemiesBullet(){
         for (Object* e: fighters) {
             if (e != &player && player.health != 0 && --e->reload <= 0){
                 setEnemyBullet(e);
@@ -316,9 +316,9 @@ struct Game {
             fighters.push_back(enemy);
             enemy->x = SCREEN_WIDTH;
             enemy->y = rand() % SCREEN_HEIGHT;
-            enemy->dx = -(2 + (rand() % 4));
+            enemy->dx = -(1 + (rand() % 5));
             enemy->health = 1;
-            enemy->reload = FRAME_PER_SECOND * (1 + (rand() % 3));
+            enemy->reload = FRAME_PER_SECOND * (2 + (rand() % 2));
             enemy->side = SIDE_ALIEN;
             enemy->texture = enemyTexture;
             SDL_QueryTexture(enemy->texture, NULL, NULL, &enemy->w, &enemy->h);
@@ -331,8 +331,7 @@ struct Game {
         }
     }
 
-
-    void doFighters()
+    void controlFighters()
     {
         auto it = fighters.begin();
         it++;
@@ -343,7 +342,7 @@ struct Game {
             if (fighter->y == SCREEN_HEIGHT-30){
                 fighter-> dy = - 5;
             }
-            if ( fighter->y == 0+20){
+            if ( fighter->y == 20){
                 fighter-> dy = 5;
             }
 
@@ -382,9 +381,9 @@ struct Game {
         if (WINGAME() == false && LOSEGAME() == false){
             background.doBackground();
             controlPlayer();
-            doFighters();
+            controlFighters();
             if (LEVEL >= 2){
-                doEnemies();
+                fireEnemiesBullet();
             }
             if (LEVEL >= 5) {
                 if (exist_boss ==0){
@@ -476,7 +475,6 @@ struct Game {
                 graphics.play(explode);
                 drawExplosion(graphics);
                 check_explosion--;
-
             }
         }
     }

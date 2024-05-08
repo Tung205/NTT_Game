@@ -8,9 +8,9 @@
 #include "counting.h"
 #include "defs.h"
 struct Graphics {
-     SDL_Renderer *renderer;
+    SDL_Renderer *renderer;
 	SDL_Window *window;
-    	void logErrorAndExit(const char* msg, const char* error)
+    void logErrorAndExit(const char* msg, const char* error)
     {
         SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_ERROR, "%s: %s", msg, error);
         SDL_Quit();
