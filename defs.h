@@ -5,8 +5,8 @@
 #define SCREEN_WIDTH                1000
 #define SCREEN_HEIGHT               700
 
-#define LIFE_PLAYER                 10
-#define TARGET_TO_KILL              10
+#define LIFE_PLAYER                 15
+#define TARGET_TO_KILL              30
 #define CHANGE_BULLET               10
 #define _LEVEL                      1
 #define PLAYER_SPEED                10
@@ -17,7 +17,7 @@
 #define SIDE_ALIEN                  1
 #define FRAME_PER_SECOND            60
 #define ENEMY_BULLET_SPEED          5
-#define DEFEND_COUNTING             3
+#define DEFEND_COUNTING             5
 #define COUNTING_TILL_FINISH        2000
 
 const int CLIPS[][4] = {
@@ -49,16 +49,40 @@ const int CLIPS[][4] = {
 const int FRAMES = sizeof(CLIPS)/sizeof(int)/4;
 
 const int LIFE_COUNT[][4]{
-    {0, 0, 48, 33},
-    {48, 0, 48, 33},
-    {96, 0, 48, 33},
-    {0, 33, 48, 33},
-    {48, 33, 48, 33},
-    {96, 33, 48, 33},
-    {0, 66,  48, 33},
-    {48, 66, 48, 33},
-    {96, 66, 48, 33},
-    {40, 99, 48, 36},
+    {0, 0, 50, 40},
+    {50, 0, 50, 40},
+    {100, 0, 50, 40},
+    {150, 0, 50, 40},
+    {200, 0, 50, 40},
+    {250, 0, 50, 40},
+
+    {0, 40, 50, 40},
+    {50, 40, 50, 40},
+    {100, 40, 50, 40},
+    {150, 40, 50, 40},
+    {200, 40, 50, 40},
+    {250, 40, 50, 40},
+
+    {0, 80, 50, 40},
+    {50, 80, 50, 40},
+    {100, 80, 50, 40},
+    {150, 80, 50, 40},
+    {200, 80, 50, 40},
+    {250, 80, 50, 40},
+
+    {0, 120, 50, 40},
+    {50, 120, 50, 40},
+    {100, 120, 50, 40},
+    {150, 120, 50, 40},
+    {200, 120, 50, 40},
+    {250, 120, 50, 40},
+
+    {0, 160, 50, 40},
+    {50, 160, 50, 40},
+    {100, 160, 50, 40},
+    {150, 160, 50, 40},
+    {200, 160, 50, 40},
+    {250, 160, 50, 40},
 };
 const int LIFE_FRAMES = sizeof(LIFE_COUNT)/ sizeof(int)/4;
 #endif
