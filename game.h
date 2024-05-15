@@ -123,48 +123,48 @@ struct Game {
 
     void updateLevel(Graphics& graphics, int LEVEL){
         if (LEVEL == 1){
-            background.texture = graphics.loadTexture("bg11.png");
+            background.texture = graphics.loadTexture("bg1.png");
         }
         if (LEVEL == 2){
             background.texture = graphics.loadTexture("bg2.png");
             enemyBulletTexture = graphics.loadTexture("bulletobject.png");
         }
         if (LEVEL == 3){
-            background.texture = graphics.loadTexture("bg31.png");
+            background.texture = graphics.loadTexture("bg3.png");
         }
         if (LEVEL == 4){
-            background.texture = graphics.loadTexture("bg41.png");
+            background.texture = graphics.loadTexture("bg4.png");
             enemyBulletTexture = graphics.loadTexture("red_light.png");
         }
         if (LEVEL == 5){
-            background.texture = graphics.loadTexture ("bg51.png");
+            background.texture = graphics.loadTexture ("bg5.png");
             enemyBulletTexture2 = graphics.loadTexture ("red_light.png");
             enemyBulletTexture = graphics.loadTexture ("flash.png");
             bossTexture = graphics.loadTexture ("boss1.png");
         }
         if (LEVEL == 6){
-            background.texture = graphics.loadTexture ("bg61.png");
+            background.texture = graphics.loadTexture ("bg6.png");
            enemyBulletTexture = graphics.loadTexture ("red_light.png");
             enemyBulletTexture2 = graphics.loadTexture ("bulletobject.png");
         }
         if (LEVEL == 7){
-            background.texture = graphics.loadTexture ("bg71.png");
+            background.texture = graphics.loadTexture ("bg7.png");
             enemyBulletTexture2 = graphics.loadTexture ("red_light.png");
             enemyBulletTexture = graphics.loadTexture ("flash.png");
             bossTexture = graphics.loadTexture ("boss2.png");
         }
         if (LEVEL == 8){
-            background.texture = graphics.loadTexture("bg7.png");
+            background.texture = graphics.loadTexture("bg8.png");
             enemyBulletTexture = graphics.loadTexture ("flash.png");
             bossTexture = graphics.loadTexture("boss3.png");
         }
         if (LEVEL == 9){
-            background.texture = graphics.loadTexture("bg6.png");
+            background.texture = graphics.loadTexture("bg9.png");
             enemyBulletTexture = graphics.loadTexture("sun_light.png");
             enemyBulletTexture2 = graphics.loadTexture("flash.png");
         }
         if (LEVEL == 10){
-            background.texture = graphics.loadTexture("bg5.png");
+            background.texture = graphics.loadTexture("bg10.png");
             bossTexture = graphics.loadTexture("boss4.png");
             enemyBulletTexture3 = graphics.loadTexture("red_light.png");
         }
@@ -567,7 +567,6 @@ struct Game {
             if (check_explosion == true){
                 graphics.play(explode);
                 drawExplosion(graphics);
-
                 check_explosion = false;
             }
         }
