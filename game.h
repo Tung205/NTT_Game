@@ -19,36 +19,49 @@ struct Game {
     int LEVEL = _LEVEL;
     int targetToKill = TARGET_TO_KILL;
     int exist_boss = 0;
+
     int change_bullet = CHANGE_BULLET;
     int change_bullet_counting = CHANGE_BULLET_COUNTING;
+
     int defend_counting = DEFEND_COUNTING;
+    int countingTillFinish = COUNTING_TILL_FINISH;
+    int countingEnemyTillFinish = COUNTING_TILL_FINISH;
+    int countingToTurnOnDefend = COUNTING_TILL_FINISH - 500;
     bool defend_status = false;
+    bool defend_enemy_status = false;
 
     bool play = false;
     bool help = false;
 
-    int countingTillFinish = COUNTING_TILL_FINISH;
-    Explosion explosion;
     Counting counting_life;
     Counting counting_target;
     Counting counting_changeBullet;
     Counting counting_defend;
+
+    Explosion explosion;
     Background background;
     Object player;
+
     Mix_Music *gMusic;
     Mix_Chunk *explode;
 
     list<Object*> bullets;
 	list<Object*> fighters;
 
-    SDL_Texture *bulletTexture, *bulletTexture2, *enemyTexture, *enemyBulletTexture,
-     *enemyBulletTexture2, *enemyBulletTexture3, *explosionTexture, *bossTexture, *defendTexture,
-     *countingTexture, *countingTarget, *countingChangeBullet, *countingDefend,
-     *Win, *Lose, *life, *target, *defend, *changeBullet, *Menu, *HelpTexture;
+    SDL_Texture *bulletTexture, *bulletTexture2,
+        *enemyTexture, *enemyBulletTexture,
+        *enemyBulletTexture2, *enemyBulletTexture3,
+        *explosionTexture, *bossTexture,
+        *defendTexture, *defendTexture2,
+        *countingTexture, *countingTarget,
+        *countingChangeBullet, *countingDefend,
+        *Win, *Lose, *life, *target,
+        *defend, *changeBullet, *Menu, *HelpTexture;
 
 
     int timeToCreateEnemy;
     int timeToResetStage;
+
     bool check_explosion = false;
     int bulletCollidesX = 0;
     int bulletCollidesY = 0;
@@ -93,6 +106,7 @@ struct Game {
         bulletTexture2 = graphics.loadTexture("purple_light.png");
         enemyTexture = graphics.loadTexture("enemy.png");
         defendTexture = graphics.loadTexture("defend.png");
+        defendTexture2 = graphics.loadTexture("defend.png");
 
         life = graphics.loadTexture("LIFE.png");
         target = graphics.loadTexture("Target.png");
@@ -168,6 +182,12 @@ struct Game {
             bossTexture = graphics.loadTexture("boss4.png");
             enemyBulletTexture3 = graphics.loadTexture("red_light.png");
         }
+        if (LEVEL == 11){
+            background.texture = graphics.loadTexture("bg11.png");
+            bossTexture = graphics.loadTexture("boss5.png");
+            enemyBulletTexture2 = graphics.loadTexture("bulletmirror.png");
+            enemyBulletTexture = graphics.loadTexture("flash.png");
+        }
         reset();
     }
 
@@ -175,19 +195,21 @@ struct Game {
         Object* boss = new Object();
         fighters.push_back(boss);
         if (LEVEL != 10){
-        boss->x = SCREEN_WIDTH * 3 /4;
-        boss->y = SCREEN_HEIGHT/2 + 100;
+            boss->x = SCREEN_WIDTH * 3 /4;
+            boss->y = SCREEN_HEIGHT/2 + 100;
         }
         if (LEVEL == 10){
             boss->x  = SCREEN_WIDTH /2 + 50;
             boss->y  = SCREEN_HEIGHT /3;
          }
-        if (LEVEL == 5 || LEVEL  == 6 || LEVEL == 8 || LEVEL == 9){
+        if (LEVEL == 5 || LEVEL  == 6 || LEVEL == 8 || LEVEL == 9 || LEVEL == 11){
             boss->dy = 5;
-        } else {
-            boss->dy = 0;
+            boss->dx = 0;
         }
-        boss->dx = 0;
+        else {
+            boss->dy = 0;
+            boss->dx = 0;
+        }
         boss->health = 1;
         boss->side = SIDE_ALIEN;
         boss->texture = bossTexture;
@@ -248,9 +270,12 @@ struct Game {
 
         bullet->x += (enemy->w / 2) - (bullet->w / 2);
         bullet->y += (enemy->h / 2) - (bullet->h / 2);
-        if (LEVEL > 2){
-        DirectionOriented(player.x + (player.w / 2), player.y + (player.h / 2),
+        if ((LEVEL > 2 && LEVEL != 11) || (LEVEL == 11 && bullet->texture == enemyBulletTexture)){
+            DirectionOriented(player.x + (player.w / 2), player.y + (player.h / 2),
                   enemy->x, enemy->y, &bullet->dx, &bullet->dy, LEVEL);
+        }else {
+            bullet->dx = -3;
+            bullet->dy = 0;
         }
         if (LEVEL != 10){
             bullet->dx *= ENEMY_BULLET_SPEED;
@@ -263,7 +288,11 @@ struct Game {
             enemy->reload = (rand() % FRAME_PER_SECOND * 2);
         } else if (LEVEL >5 && LEVEL <= 8){
             enemy->reload = (rand() % FRAME_PER_SECOND * 5/3);
-        } else {
+        }
+        else if (LEVEL == 11){
+            enemy->reload = 30;
+        }
+        else  {
             enemy->reload = (rand() % FRAME_PER_SECOND * 4/3);
         }
     }
@@ -289,7 +318,7 @@ struct Game {
                 change_bullet_counting--;
             }
         }
-        if (currentKeyStates[SDL_SCANCODE_E]&& player.reload == 0){
+        if (currentKeyStates[SDL_SCANCODE_E]&& player.reload == 0 && defend_status == false){
             if (defend_counting > 0){
                 cerr << "defend counting" << defend_counting << endl;
                 defend_status = true;
@@ -305,6 +334,9 @@ struct Game {
         for (Object* fighter: fighters) {
             if (fighter->side != b->side && b->collides(fighter)) {
                 if (fighter == &player && defend_status == true){
+                    return false;
+                }
+                if (fighter != &player && defend_enemy_status == true){
                     return false;
                 }
                 if (fighter->texture != bossTexture || (fighter == &player && defend_status == false)){
@@ -350,13 +382,25 @@ struct Game {
                     defend_status = false;
                 }
             }
+            if (defend_enemy_status == true){
+                countingEnemyTillFinish --;
+                if(countingEnemyTillFinish <0){
+                    defend_enemy_status = false;
+                }
+            }
+
         }
     }
 
     void fireEnemiesBullet(){
         for (Object* e: fighters) {
-            if (e != &player && player.health != 0 && --e->reload <= 0){
+            if (LEVEL != 11 && e != &player && player.health != 0 && --e->reload <= 0){
                 setEnemyBullet(e);
+            }
+            if (LEVEL == 11 && e != &player && player.health != 0 && --e->reload <= 0){
+                if (e->y - player.y <= 20){
+                    setEnemyBullet(e);
+                }
             }
         }
     }
@@ -392,13 +436,13 @@ struct Game {
         while (it != fighters.end()) {
             auto temp = it++;
             Object* fighter = *temp;
-            fighter->move();
             if (fighter->y == SCREEN_HEIGHT-30){
-                fighter-> dy = - 5;
+                fighter-> dy = -5;
             }
             if ( fighter->y == 20){
                 fighter-> dy = 5;
             }
+            fighter->move();
 
             if (fighter->x < -fighter->w) fighter->health = 0;
             if (fighter->health == 0) {
@@ -411,6 +455,11 @@ struct Game {
         player.move();
         player.dx = 0;
         player.dy = 0;
+        if (LEVEL == 11){
+            if (player.x >= SCREEN_WIDTH/2){
+                player.x = SCREEN_WIDTH/2;
+            }
+        }
         if (player.x < 0) player.x = 0;
         else if (player.x >= SCREEN_WIDTH - player.w)
             player.x = SCREEN_WIDTH - player.w;
@@ -419,7 +468,7 @@ struct Game {
             player.y = SCREEN_HEIGHT - player.h;
 	}
 	bool WINGAME(){
-	    if( LEVEL == 11){
+	    if( LEVEL == 12){
             play = false;
             return true;
 	    }
@@ -447,6 +496,7 @@ struct Game {
                     check_explosion = 0;
                     bulletCollidesX = 0;
                     bulletCollidesY = 0;
+                    defend_enemy_status = false;
                     defend_status = false;
                     reset();
             }
@@ -467,11 +517,18 @@ struct Game {
                     exist_boss++;
                 }
             }
-            if (LEVEL != 5 && LEVEL != 8){
+            if (LEVEL != 5 && LEVEL != 8 && LEVEL != 11){
                 CreateEnemy();
             }
             fireBullets();
-
+            if (LEVEL == 11){
+                countingToTurnOnDefend--;
+                if (countingToTurnOnDefend < 0){
+                    countingEnemyTillFinish = COUNTING_TILL_FINISH;
+                    defend_enemy_status = true;
+                    countingToTurnOnDefend = COUNTING_TILL_FINISH;
+                }
+            }
             if (player.health == 0 && --timeToResetStage <= 0){
                 Life--;
                 reset();
@@ -537,6 +594,9 @@ struct Game {
                 if (b->health > 0){
                     graphics.renderTexture(b->texture, b->x, b->y);
                 }
+                if (defend_enemy_status == true && b != &player){
+                   graphics.renderTexture(defendTexture2,b->x, b->y);
+                }
             }
 
             counting_life.tick(Life);
@@ -564,12 +624,13 @@ struct Game {
             if (defend_status == true){
                 graphics.renderTexture(defendTexture, player.x, player.y);
             }
+
             if (check_explosion == true){
                 graphics.play(explode);
                 drawExplosion(graphics);
                 check_explosion = false;
             }
-        }
+    }
     }
 
     void Destroy(){
